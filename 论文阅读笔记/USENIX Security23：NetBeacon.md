@@ -61,7 +61,7 @@ NetBeacon使用的特征包括：
 如图6所示，按照经典的前缀编码，对于决策树最左边的路径，f1的[65,103)需要编码成8个互不相交的前缀，f2的[0,256)需要一个编码，f3的[10,256)需要6个编码，共有48中组合。因此ternary matching会存在严重的组合爆炸问题，即model table的entry数量爆炸。
 NetBeacon的区间编码包括三部分：
 + feature table的range marking，按照决策树中涉及到的$N$个分界点将整个取值空间划分为$N+1$个basis区间，feature table就是将特征的取值空间映射到唯一编码的过程，同时还要求连续的取值区间合并成的associative ranges也能映射到唯一的编码。例如图6张节点4有个associative range [0,65)，它包含两个basis区间，即[0,25)和[25，65)。feature table的range marking规则如表3所示。
-+ model table的range marking，某些key可能涉及到associative range，此时引入通配符*，将feature table中的多个basis range收缩成model table中的一个range mark。model table的range marking规则如表3所示，此时associative range [0,65)可以映射为唯一编码(*11).
++ model table的range marking，某些key可能涉及到associative range，此时引入通配符\*，将feature table中的多个basis range收缩成model table中的一个range mark。model table的range marking规则如表3所示，此时associative range [0,65)可以映射为唯一编码(\*11).
 + feature table的range coding。简单来说就是针对一个具体的值，如何快速地找到对应的range mark。如果直接将每个basis range按照前缀匹配的方式拆成多个前缀则会带来存储效率的问题。作者提出CRC算法，有效地减少前缀的数量。其基本思路是将互不相交的不区分优先级的区间变成有可能相交的区分优先级的区间。前者，区间数量多，但是对于具体的数值只会命中一个ternary entry；后者，区间数量少，但是可能命中多个ternary entry，选择优先级最高的那个。
 ### CRC 算法
 ![image](https://github.com/HongFuZ/HongFuZ.github.io/assets/14175384/fae3c10f-6835-460a-9b2e-0edc8598c0e7)
