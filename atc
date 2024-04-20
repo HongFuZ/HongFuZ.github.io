@@ -1,39 +1,30 @@
-https://atc24.usenix.hotcrp.com/paper/532
-
-A:
-
-The paper shows a toy example of using fewer time slots as a time optimization, and it says that the real data is intensive and smooth. Showing the data here would more strongly back up the decision to use fewer time slots. Along the same lines of time slots, it is mentioned that the goal is to solve the optimization problem in a few hours (10 hours in your network). However, after describing the time slots optimization, it mentions that it can be solved in 20 minutes. Since there appears to be a tradeoff between time and accuracy of the optimization problem, would it make sense to use more time and get higher accuracy? Also, I'm curious about how the goal of running in a few hours was decided.
-	可以补充图来证明the real data is intensive and smooth（应该有现成的）
-	288个时隙一天多还没跑出结果来，gap是怎么评估的？
-
-At the beginning of section 5.3, it is mentioned that the local controller in each PoP runs algorithms and uploads results to the controller, as shown in Figure 6. Figure 6 doesn't contain information about the locations that any computations are being run.
-
-
-When describing the congestion of the backbone network, it is mentioned that you verify the problem and find the results described (overflowing links), but information about what data was examined and how you made this observation is missing.
-忽略骨干网容量约束或者说认为骨干网容量无穷大的条件下来做BGP流量调度，然后检查骨干网链路的利用率情况，统计利用率超限的链路比例。
-
-All data in the paper appears to be from one week in May 2023. Do you have any other data or anything to show that this was a "typical" week in terms of things like percentage of performance-sensitive applications?
-我们有更多的实际数据，它们的分布特征基本一致，我们可以在论文里show一下数据情况。论文中已经提到了。。。
-
-Lastly, I think the eval would benefit from more of a deep-dive into the effect of each component. The component analysis for Forest Bitmap is present and looks good, but it would have been good to see the effect if you hadn't considered backbone limitations, or didn't maximally utilize bursting links.  ==》后面提供。冲顶阈值有实验数据
-
-B:
-Weaknesses:
-Evaluation methodology
-Incremental contribution
-Generality
-The paper is engaging and presents intriguing results; however, it lacks several essential attributes crucial for publication.
-
-Evaluation methodology.
-
-Most of the evaluation is conducted against benign baselines, such as BGP and Google RadixTree.
-1.1	Since you have already compared against the state-of-the-art (Fig. 11), it would be expected that all other experiments (Figs. 12, 13, 14) yield similar comparisons. 我们是第一次做成本和性能的多目标优化，cascara
-1.2	While comparisons against BGP are useful, they are less interesting, given that Cascara has already demonstrated similar results.  
-1.3	 1.2 Google RadixTree is a 15-year-old longest-prefix-match implementation. It is recommended to consider more recent algorithms in this field, such as the popular highly optimized DPDK implementation.
-
-Fig. 12 poses a challenge as the reader cannot ascertain whether a 2ms reduction in latency is significant or not. For instance, a 2ms reduction out of 10ms would be more noteworthy than a 2ms reduction out of 60ms.
-===》之前考虑的是不泄露真实数据，34->36
-
-The problem addressed in your paper is not novel within the community, as several works have already been published in this field. Consequently, the paper's primary contributions lie in providing new insights, such as taking into account link capacities and utilizing inter-PoP strategies, and presenting observations derived from real-world production systems. However, there is a sense that many of these insights and observations are obscured, consequently limiting the contribution and narrowing the applicability of your solution to a very specific use case. I recommend providing more detailed information about real-world production characteristics, akin to Fig. 5. (You may consider Fig. 4 in "Inside the Social Network's (Datacenter) Network, SIGCOMM'15" as an example).
-
+We thank the reviewers for taking the time and effort to review the manuscript. We appreciate all valuable comments and suggestions, which help us improve the quality of the manuscript and share it with the community.
+Review A
+A.1. The paper shows a toy example of using fewer time slots as a time optimization, showing the data here would more strongly back up the decision to use fewer time slots. 
+Thanks for the wonderful advice. We have demonstrated the data in the attached file， including both data sorting and sampling result. The data indeed strongly back up the decision to use fewer time slots. We will add the figures and the corresponding explanation in the revised version. 
+A.2. Would it make sense to use more time and get higher accuracy for the overall bandwidth allocation problem? I'm curious about how the goal of running in a few hours was decided.
+This is a very good question. We agree with you that it makes sense to use more time and get higher accuracy. First, it is sufficient to achieve the optimal results with regard to the traffic distribution in most cloud networks, for example, Azure selects 15 hours of execution time for recomputing the billable bandwidth. Second, for the case of variable traffic distribution like assigning the workload to any available port during link failure, we may have a large benefit loss if the triggered optimization can't be solved within 10 hours. And we expect to shorten the time to achieve optimal results, which is the contribution of this paper. By using the accelerating approach proposed in this paper, we can solve the overall optimization problem within 20 minutes, but with an error of less than 5% compared to the optimal solution. We will explain this issue in the revised version. 
+A3. Figure 6 doesn't contain information about the locations that any computations are being run.
+We apologize for the confusion. We will redraw Figure 6 and clearly illustrate the operating procedures there.
+A4. Information about what data was examined and how you made the observation is missing when verifying the congestion problem of backbone links.
+We conduct experiments by using the traffic data in our production networks but assume no backbone capacity constraints. Then we calculate the utilization of the backbone links according to the scheduling. Surprisingly, we observe ∼10-30% of the backbone links are overloaded. In the worst case, maximum link utilization can be 800%. 
+A5. Data in the paper appears to be from one week. Do you have any other data or anything to show that this was a "typical" week?
+Thanks for your comment. In the granularity of days, we demonstrate the consistency like the results given in Table 3, Section 7.1. We do have the same result based on data from different weeks which is very large (Tbits). We will provide the analysis in the paper. 
+A6. I think the eval would benefit from more of a deep-dive into the effect of each component.
+Thanks for your interest. We have multiple results but omit due to the lack of space. We’d like to demonstrate the effect of each component and share more experience since EdgeCross has been used by the production cloud networks. 
+Review B
+B1. The novelty of the paper
+As far as we know, we are the first work explaining the newly emerging demand of cloud customers, which has diverse requirements with ambiguous statement for cloud network capability, including not only determined latency, bandwidth, security, but also the statements like as low latency as possible, as low cost as possible, etc. (as depicted in Table 1) To meet their requirements, we need to innovatively re-design the cloud networking system. For example, upgrading the data plane to identify the specified traffic of certain applications or users, monitoring the networking service of these identified traffic in short time granularity, and achieving fast response to jitters. EdgeCross enhances the control plane, which addressed one of the hardest challenges, i.e. satisfying the requirements with low cost regarding to the high computation complexity of route decisions. 
+The effectiveness of EdgeCross is critical because the customers will move to our cloud if their demands are satisfied, and leave otherwise. The effectiveness of EdgeCross have been verified by not only the results given in the paper but attracting a large number of customers after it is deployed online. We’d like to share the experience to the community. Multiple points are new i.e. 
+(1) explaining new demand of cloud network customers which are interesting for researchers, and can motivate new research works. 
+(2) presenting key insights of high computation complexity due to billion-level application-aware flows and joint-optimization of both peering links and backbone network links
+(3) a series of effective optimization approaches to accelerate the route computation. 
+(4) the demand for Routing Table Compression at control plane to verify the generated routes are not well addressed in literatures. 
+Thanks for your comments, we will provide more detailed information about real-world production. 
+B.2. Since you have already compared against the state-of-the-art (Fig. 11), it would be expected that all other experiments (Figs. 12, 13, 14) yield similar comparisons. 
+Cascara aims to optimize cost in the first phase of EdgeCross for billable bandwidth. Thus we can only provide the comparison on cost saving.
+B.3. It is recommended to consider more recent algorithms besides RadixTree, eg. LPM in DPDK.
+Thanks for your comments. We focused on RadixTree (with continuous update) because it is widely used and stable in product environment. We have reviewed multiple works such as Tree BitMap [1], SAIL [2], and Poptrie [3]. ForestBitmap outperforms these results. The LPM in DPDK can't be applied in our system because it consumes large memory for performance. But we focus on saving the memory. 
+B.4.  Fig. 12 poses a challenge as the reader cannot ascertain whether a 2ms reduction in latency is significant or not. 
+The latency is reduced from 36ms to 34ms. We have to hide the exact values from the product network. 
 
